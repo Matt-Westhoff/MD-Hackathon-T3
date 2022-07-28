@@ -1,0 +1,110 @@
+---
+title: "Summary statistics"
+output: html_document
+date: "2022-07-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+
+setwd('C:/Users/Michelle Edwards/Documents/MD Hackathon')
+```
+
+## R Markdown
+
+First we need to read in the dataset:
+
+```{r read in files}
+df <- read.csv('Bike_Rack_Use_By_Stop_By_Fiscal_Week.csv')
+```
+
+## Some plots
+
+Let's try a histogram of the totals across all the weeks.
+
+```{r hist1}
+ggplot(df) +
+  geom_histogram(aes(x = Total), binwidth = 500) +
+  theme_bw()
+```
+
+I think the datapoint with > 30000 uses is a total of the others. We should check this:
+
+```{r check large datapoint}
+mystery_row <- df[df$Total > 30000,]
+
+df_updated <- df[df$Total <= 30000,]
+# numeric columns are 3 to 65
+colsums <- colSums(df_updated[,3:65])
+
+together <- rbind(mystery_row[,3:65], colsums)
+
+# check if they are equal everywhere
+sum(mystery_row[,3:65] - colsums)
+
+which((mystery_row[,3:65] - colsums)>0)
+
+sum(df_updated[,62])
+mystery_row[,62]
+```
+
+They are only different in one place. We will assume this is an error and proceed with removing the total row:
+```{r hist2}
+ggplot(df_updated) +
+  geom_histogram(aes(x = Total), binwidth = 1) +
+  ggtitle("Total number of stops") +
+  theme_bw()
+
+ggplot(df_updated[df_updated$Total < 100,]) +
+  geom_histogram(aes(x = Total), binwidth = 1) +
+  ggtitle("Total number of stops (where total < 100)") +
+  theme_bw()
+```
+
+Summary stats of total stops over all weeks
+```{r summary stats 1}
+
+summary(df_updated$Total)
+
+```
+
+
+Summary stats of total stops over each week 
+```{r summary stats 2}
+
+summary(t(mystery_row[,3:65]))
+
+```
+
+
+Summary stats of stops at racks for each week
+```{r summary stats 3}
+
+summary(df_updated)
+
+```
+
+Busiest rack?
+```{r busiest rack}
+
+df_updated[which.max(df_updated$Total),]$Stop.Name
+
+```
+
+
+Busiest week? **Not sure how to convert this to a week**
+```{r busiest week}
+
+which.max(mystery_row)
+
+```
+
+
+Busiest rack on the busiest week?
+```{r busiest week rack}
+
+df_updated[which.max(df_updated[,which.max(mystery_row)]),]$Stop.Name
+
+```
