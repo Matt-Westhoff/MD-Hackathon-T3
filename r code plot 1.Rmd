@@ -1,0 +1,65 @@
+---
+title: "Visualisations of ACT Bike Rack Usage"
+output: 
+  html_document:
+    code_folding: hide
+    df_print: paged
+    
+---
+
+# 0.0 Packages
+
+```{r}
+require(data.table)
+require(ggplot2)
+require(dplyr)
+```
+
+## 0.1 User inputs directory setup
+```{r}
+in.dir.name <- 'C:/Users/Matt/Documents/hackathon/md hackathon local/'
+data.name <- "Bike_Rack_Use_By_Stop_By_Fiscal_Week.csv"
+
+
+in.data.obj.name <- paste0(in.dir.name, data.name)
+in.data.obj <- fread(in.data.obj.name)
+```
+
+# 1.0 Initial exploration
+
+```{r}
+head(in.data.obj, 10)
+```
+
+```{r}
+summary(lapply(in.data.obj[,66:68],function(x) is.na(x)))
+```
+
+
+## 2.0 Some data prep
+
+## 2.1 Separate lang long column into 2 columns
+
+```{r}
+in.data.obj[, c('Latitude','Longitude') := tstrsplit(Location, c(", ")    )
+            ][,`:=`(Latitude=as.double(substring(Latitude,2, nchar(Latitude))), 
+              Longitude=as.double(substring(Longitude,1, nchar(Longitude)-1)))]
+```
+
+## 2.2 Remove location 1 and location column
+
+```{r}
+in.data.obj[, c('Location 1', 'Location') := NULL]
+```
+
+# 3.0 Visualisations
+
+## 3.1 Latitude longitude visualisation
+
+```{r warning=FALSE}
+in.data.obj %>% ggplot(aes(x=Latitude, y=Longitude)) + 
+  geom_point(aes(colour=Total, alpha=0.1)) +
+  labs(title="Spatial location of bike stops colour coded by trips taken",
+       caption = 'data source: Bike Rack Use By Stop By Fiscal Week ACT')
+```
+
